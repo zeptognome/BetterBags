@@ -61,6 +61,12 @@ end
 local function drawDirtyItemUnstacked(view, data)
   local categoryChanged = false
   local bagid = data.bagid
+
+  -- Don't draw keys at all.
+  if bagid == Enum.BagIndex.Keyring then
+    return false
+  end
+
   local slotkey = view:GetSlotKey(data)
   -- Create or get the item frame for this slot.
   local itemButton = view.itemsByBagAndSlot[slotkey] --[[@as Item]]
@@ -73,7 +79,7 @@ local function drawDirtyItemUnstacked(view, data)
   itemButton:SetItem(data)
 
   -- Add the item to the correct category section, skipping the keyring unless we're showing bag slots.
-  if (not data.isItemEmpty and bagid ~= Enum.BagIndex.Keyring) then
+  if (not data.isItemEmpty) then
     local section = view:GetOrCreateSection(data.itemInfo.category)
     section:AddCell(slotkey, itemButton)
   end
@@ -149,8 +155,10 @@ local function GridView(view, bag, slotInfo)
           end
         elseif data.itemInfo.category ~= sectionName then
           if view.defer then
-            debug:Log("RemoveCell", "Removed mismatch (defer)", slotkey, data.itemInfo.itemLink, data.itemInfo.category, "->", sectionName)
-            view.itemsByBagAndSlot[slotkey]:SetFreeSlots(data.bagid, data.slotid, -1, "Recently Deleted")
+            if sectionName ~= L:G("Recent Items") then
+              debug:Log("RemoveCell", "Removed mismatch (defer)", slotkey, data.itemInfo.itemLink, data.itemInfo.category, "->", sectionName)
+              view.itemsByBagAndSlot[slotkey]:SetFreeSlots(data.bagid, data.slotid, -1, "Recently Deleted")
+            end
             bag.drawOnClose = true
           else
             debug:Log("RemoveCell", "Removed mismatch", slotkey, data.itemInfo.itemLink, data.itemInfo.category, "->", sectionName)

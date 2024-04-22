@@ -262,6 +262,7 @@ local OptionsTable = {}
 ---@field frame Frame
 ---@field section Section
 ---@field parent AceGUIFrame
+---@field label AceGUILabel
 local AceItemList = {}
 
 ---@param values CustomCategoryFilter
@@ -285,6 +286,15 @@ function ContainerFrame_UpdateCooldown(id, button) end
 
 ---@type Frame
 GameMenuFrame = {}
+
+---@type CheckButton
+KeyRingButton = {}
+
+---@type Button
+CharacterReagentBag0Slot = {}
+
+---@class MainMenuBagButton: Button
+---@field SlotHighlightTexture Texture
 
 ----
 -- ConsolePort annotations

@@ -30,6 +30,9 @@ local L =  addon:GetModule('Localization')
 ---@class Debug: AceModule
 local debug = addon:GetModule('Debug')
 
+---@class Categories: AceModule
+local categories = addon:GetModule('Categories')
+
 ---@class Database: AceModule
 local DB = addon:GetModule('Database')
 
@@ -50,6 +53,9 @@ local function SetList(self, values)
   local itemList = {}
   for k, _ in pairs(values.itemList) do
     table.insert(itemList, k)
+  end
+  if self.label then
+    self.label = nil
   end
   self:ReleaseChildren()
   self:SetFullWidth(true)
@@ -82,9 +88,19 @@ local function SetList(self, values)
     items:RefreshAll()
     label.frame:EnableMouse(true)
     label.frame:SetScript("OnReceiveDrag", rec)
+    label.frame:SetScript("OnMouseDown", rec)
+    label.frame:SetScript("OnEnter", function()
+      GameTooltip:SetOwner(label.frame, "ANCHOR_TOP")
+      GameTooltip:SetText(L:G("Drag an item here to add it to this category."))
+      GameTooltip:Show()
+    end)
+    label.frame:SetScript("OnLeave", function()
+      GameTooltip:Hide()
+    end)
     if self.parent then
       self.parent:DoLayout()
     end
+    self.label = label
     return
   end
 
@@ -110,7 +126,7 @@ local function SetList(self, values)
             ---@type CustomCategoryFilter
             local list = self:GetUserData("values")
             DB:DeleteItemFromCategory(v.itemInfo.itemID, list.name)
-            self:SetList(DB:GetItemCategory(list.name))
+            self:SetList(categories:GetMergedCategory(list.name))
             events:SendMessage('bags/FullRefreshAll')
           end
         }})
@@ -159,6 +175,7 @@ function config:CreateItemListWidget()
   widget.frame:EnableMouse(true)
 
   local section = sectionFrame:Create()
+  section:DisableHeader()
   section:SetFillWidth(true)
   section:SetTitle("Items")
   section.frame:SetParent(widget.frame)

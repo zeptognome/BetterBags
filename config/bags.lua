@@ -61,7 +61,7 @@ function config:GetCustomCategoryOptions(kind)
     end,
     values = {}
   }
-  for category, _ in pairs(DB:GetAllItemCategories()) do
+  for category, _ in pairs(categories:GetAllCategories()) do
     if type(category) == "string" then
       options.values[category] = category
     else
@@ -103,7 +103,8 @@ function config:GetBagOptions(kind)
               ["Subtype"] = L:G("Subtype"),
               ["Expansion"] = L:G("Expansion"),
               ["TradeSkill"] = L:G("Trade Skill"),
-              ["GearSet"] = L:G("Gear Set")
+              ["GearSet"] = L:G("Gear Set"),
+              ["EquipmentLocation"] = L:G("Equipment Location"),
             }
           },
           customCategories = config:GetCustomCategoryOptions(kind),

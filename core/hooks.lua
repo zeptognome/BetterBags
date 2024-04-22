@@ -44,6 +44,7 @@ function addon.OnUpdate()
     addon.backpackShouldOpen = false
     addon.backpackShouldClose = false
     addon.Bags.Backpack:Show()
+    addon:UpdateButtonHighlight()
     if addon.atInteracting then
       events:SendMessage('bags/RefreshAll')
     end
@@ -51,6 +52,7 @@ function addon.OnUpdate()
     debug:Log('Hooks', 'OnUpdate', addon.backpackShouldOpen, addon.backpackShouldClose)
     addon.backpackShouldClose = false
     addon.Bags.Backpack:Hide()
+    addon:UpdateButtonHighlight()
   end
 end
 
@@ -114,4 +116,5 @@ function addon:CloseBank(interactingFrame)
   if interactingFrame ~= nil then return end
   addon.Bags.Bank:Hide()
   addon.Bags.Bank:SwitchToBank()
+  events:SendMessage('bags/BankClosed')
 end

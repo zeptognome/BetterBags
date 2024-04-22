@@ -450,6 +450,8 @@ const.DATABASE_DEFAULTS = {
     },
     ---@type table<string, CustomCategoryFilter>
     customCategoryFilters = {},
+    ---@type table<string, CustomCategoryFilter>
+    ephemeralCategoryFilters = {},
     ---@type table<number, string>
     customCategoryIndex = {},
     categoryFilters = {
@@ -459,6 +461,7 @@ const.DATABASE_DEFAULTS = {
         TradeSkill = false,
         RecentItems = true,
         GearSet = true,
+        EquipmentLocation = true,
       },
       [const.BAG_KIND.BANK] = {
         Type = true,
@@ -466,6 +469,7 @@ const.DATABASE_DEFAULTS = {
         TradeSkill = false,
         RecentItems = true,
         GearSet = true,
+        EquipmentLocation = true,
       },
     },
     ---@type table<string, boolean>
