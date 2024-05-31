@@ -10,6 +10,8 @@
 ---@field BattlepayItemTexture Texture
 ---@field IconBorder Texture
 ---@field UpgradeIcon Texture
+---@field flashAnim AnimationGroup
+---@field newitemglowAnim AnimationGroup
 local itemButton = {}
 
 ---@param bagid number
@@ -44,6 +46,9 @@ function itemButton:SetItemButtonQuality(quality) end
 
 function itemButton:HasItem() end
 
+---@return Enum.BagIndex
+function itemButton:GetBagID() end
+
 ---@class Button
 local Button = {}
 
@@ -56,11 +61,13 @@ function itemButton:GetHighlightTexture() end
 ContinuableContainer = {}
 
 ---@class MasqueGroup
+---@field Buttons ItemButton[]
 MasqueGroup = {}
 
 function MasqueGroup:AddButton(group, button) end
 function MasqueGroup:RemoveButton(group, button) end
-
+function MasqueGroup:ReSkin(boolean) end
+function MasqueGroup:RegisterCallback(func, obj) end
 ---@class Masque
 Masque = {}
 
@@ -317,9 +324,61 @@ PawnVersion = _G['PawnVersion'] --[[@as number]]
 PawnGetItemData = _G['PawnGetItemData'] --[[@as fun(itemLink: string): table]]
 PawnIsItemAnUpgrade = _G['PawnIsItemAnUpgrade'] --[[@as fun(itemData: table): boolean]]
 PawnShouldItemLinkHaveUpgradeArrow = _G['PawnShouldItemLinkHaveUpgradeArrow'] --[[@as fun(itemLink: string): boolean]]
+PawnShouldItemLinkHaveUpgradeArrowUnbudgeted = _G['PawnShouldItemLinkHaveUpgradeArrowUnbudgeted'] --[[@as fun(itemLink: string, level?: boolean): boolean]]
 
+--- SimpleItemLevel API Globals
+---@class SimpleItemLevel
+SimpleItemLevel = {}
+SimpleItemLevel.API = {}
+
+---@param itemLink string
+---@return boolean
+function SimpleItemLevel.API.ItemIsUpgrade(itemLink) end
 
 --- SortBags
 
 -- Sort bags for classic.
 function SortBags() end
+
+--- DevTool
+---@class DevTool
+_G.DevTool = {}
+
+---@param value any
+---@param tag string
+function _G.DevTool:AddData(value, tag) end
+
+---@param index number
+---@param backpack number
+function SetCurrencyBackpack(index, backpack) end
+
+---@param index number
+---@return CurrencyInfo
+function GetCurrencyListInfo(index) end
+
+---@return number
+function GetCurrencyListSize() end
+
+
+--- WagoAnalytics
+---@class WagoAnalytics
+local WagoAnalytics = {}
+
+---@param id string
+function WagoAnalytics:Register(id) end
+
+---@param label string
+---@param enabled boolean
+function WagoAnalytics:Switch(label, enabled) end
+
+---@param counter string
+---@param amount? number
+function WagoAnalytics:IncrementCounter(counter, amount) end
+
+---@param counter string
+---@param amount? number
+function WagoAnalytics:DecrementCounter(counter, amount) end
+
+---@param counter string
+---@param amount number
+function WagoAnalytics:SetCounter(counter, amount) end

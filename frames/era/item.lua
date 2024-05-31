@@ -28,6 +28,9 @@ local equipmentSets = addon:GetModule('EquipmentSets')
 ---@class Localization: AceModule
 local L = addon:GetModule('Localization')
 
+---@class Items: AceModule
+local items = addon:GetModule('Items')
+
 ---@class Debug: AceModule
 local debug = addon:GetModule('Debug')
 
@@ -63,9 +66,13 @@ function itemFrame.itemProto:SetSize(width, height)
 end
 
 ---@param data ItemData
-function itemFrame.itemProto:SetItem(data)
-  assert(data, 'item must be provided')
-  self.data = data
+function itemFrame.itemProto:SetItemFromData(data)
+  assert(data, 'data must be provided')
+  self.slotkey = data.slotkey
+  local wasNew = false
+  if self.kind == nil then
+    wasNew = true
+  end
   --local tooltipOwner = GameTooltip:GetOwner();
   local bagid, slotid = data.bagid, data.slotid
   if bagid ~= nil and slotid ~= nil then
@@ -108,10 +115,10 @@ function itemFrame.itemProto:SetItem(data)
   self.button.IconBorder:SetVertexColor(unpack(const.ITEM_QUALITY_COLOR[data.itemInfo.itemQuality]))
   self.button.IconBorder:SetBlendMode("BLEND")
   self.button.IconBorder:Show()
-  SetItemButtonCount(self.button, data.itemInfo.currentItemCount)
+  self:UpdateCount()
   SetItemButtonDesaturated(self.button, data.itemInfo.isLocked)
   self.IconQuestTexture:Hide()
-  self:SetLock(data.itemInfo.isLocked)
+  --self:SetLock(data.itemInfo.isLocked)
   if data.bagid ~= nil then
     ContainerFrame_UpdateCooldown(data.bagid, self.button)
   end
@@ -141,7 +148,12 @@ function itemFrame.itemProto:SetItem(data)
   self.freeSlotCount = 0
   self.isFreeSlot = nil
   self:SetAlpha(1)
-  events:SendMessage('item/Updated', self)
+  if self.slotkey ~= nil then
+    events:SendMessage('item/Updated', self)
+  end
+  if wasNew then
+    events:SendMessage('item/NewButton', self)
+  end
   self.frame:Show()
   self.button:Show()
 end
@@ -153,12 +165,16 @@ end
 ---@param count number
 ---@param name string
 function itemFrame.itemProto:SetFreeSlots(bagid, slotid, count, name)
+  local wasNew = false
+  if self.kind == nil then
+    wasNew = true
+  end
+  self.slotkey = items:GetSlotKeyFromBagAndSlot(bagid, slotid)
   if const.BANK_BAGS[bagid] or const.REAGENTBANK_BAGS[bagid] then
     self.kind = const.BAG_KIND.BANK
   else
     self.kind = const.BAG_KIND.BACKPACK
   end
-  self.data = {bagid = bagid, slotid = slotid, isItemEmpty = true, itemInfo = {}} --[[@as table]]
   if count == 0 then
     self.button:Disable()
   else
@@ -187,10 +203,14 @@ function itemFrame.itemProto:SetFreeSlots(bagid, slotid, count, name)
 
   self.freeSlotName = name
   SetItemButtonQuality(self.button, Enum.ItemQuality.Common, nil, false, false)
+  self:Unlock()
 
   self.button.IconBorder:SetBlendMode("BLEND")
   self.frame:SetAlpha(1)
   events:SendMessage('item/Updated', self)
+  if wasNew then
+    events:SendMessage('item/NewButton', self)
+  end
   self.frame:Show()
   self.button:Show()
 end
@@ -227,7 +247,8 @@ function itemFrame.itemProto:ClearItem()
   self.freeSlotName = ""
   self.freeSlotCount = 0
   self.isFreeSlot = nil
-  self.data = nil
+  self.slotkey = ""
+  self.staticData = nil
   self:UpdateCooldown()
 end
 
@@ -242,6 +263,14 @@ end
 ---@return Item
 function itemFrame:_DoCreate()
   local i = setmetatable({}, { __index = itemFrame.itemProto })
+
+  -- Backwards compatibility for item data.
+  i.data = setmetatable({}, { __index = function(_, key)
+    local d = items:GetItemDataFromSlotKey(i.slotkey)
+    if d == nil then return nil end
+    return d[key]
+  end})
+
   -- Generate the item button name. This is needed because item
   -- button textures are named after the button itself.
   local name = format("BetterBagsItemButton%d", buttonCount)
@@ -277,11 +306,6 @@ function itemFrame:_DoCreate()
   i.LockTexture:SetSize(32,32)
   i.LockTexture:SetVertexColor(255/255, 66/255, 66/255)
   i.LockTexture:Hide()
-
-  --p:RegisterForClicks("MiddleButtonUp")
-  --p:SetScript("OnClick", function()
-  --  i:ToggleLock()
-  --end)
 
   button.SetMatchesSearch = function(me, match)
     if match then

@@ -36,8 +36,8 @@ local sectionFrame = addon:GetModule('SectionFrame')
 ---@class Categories: AceModule
 local categories = addon:GetModule('Categories')
 
----@class Context: AceModule
-local context = addon:GetModule('Context')
+---@class ContextMenu: AceModule
+local contextMenu = addon:GetModule('ContextMenu')
 
 ---@class Config: AceModule
 local config = addon:GetModule('Config')
@@ -57,6 +57,9 @@ local pawn = addon:GetModule('Pawn')
 ---@class Question: AceModule
 local question = addon:GetModule('Question')
 
+---@class SimpleItemLevel: AceModule
+local simpleItemLevel = addon:GetModule('SimpleItemLevel')
+
 ---@class Debug: AceModule
 local debug = addon:GetModule('Debug')
 
@@ -66,6 +69,11 @@ local debug = addon:GetModule('Debug')
 addon.Bags = {}
 
 addon.atBank = false
+
+-- BetterBags_ToggleBags is a wrapper function for the ToggleAllBags function.
+function BetterBags_ToggleBags()
+  addon:ToggleAllBags()
+end
 
 local function CheckKeyBindings()
   if InCombatLockdown() then
@@ -80,15 +88,16 @@ local function CheckKeyBindings()
     "TOGGLEBAG1",
     "TOGGLEBAG2",
     "TOGGLEBAG3",
-    "TOGGLEBAG4"
+    "TOGGLEBAG4",
+    "OPENALLBAGS"
   }
   for _, binding in pairs(bindings) do
     local key, otherkey = GetBindingKey(binding)
     if key ~= nil then
-      SetOverrideBinding(addon._bindingFrame, true, key, "OPENALLBAGS")
+      SetOverrideBinding(addon._bindingFrame, true, key, "BETTERBAGS_TOGGLEBAGS")
     end
     if otherkey ~= nil then
-      SetOverrideBinding(addon._bindingFrame, true, otherkey, "OPENALLBAGS")
+      SetOverrideBinding(addon._bindingFrame, true, otherkey, "BETTERBAGS_TOGGLEBAGS")
     end
   end
 end
@@ -124,7 +133,21 @@ function addon:OnInitialize()
       addon:ToggleAllBags()
     end)
   end
+end
 
+
+---@param bagid number
+---@return Bag
+function addon:GetBagFromBagID(bagid)
+  if const.BACKPACK_BAGS[bagid] then
+    return addon.Bags.Backpack
+  elseif const.BANK_BAGS[bagid] then
+    return addon.Bags.Bank
+  elseif const.REAGENTBANK_BAGS[bagid] then
+    return addon.Bags.Bank
+  else
+    error("invalid bagid")
+  end
 end
 
 -- HideBlizzardBags will hide the default Blizzard bag frames.
@@ -167,23 +190,19 @@ function addon:UpdateButtonHighlight()
 end
 
 local function applyCompat()
-  if not addon.isWrath then return end
-  if not C_Item.GetItemInfoInstant then
-    C_Item.GetItemInfoInstant = GetItemInfoInstant
-  end
-  if not C_Item.GetItemInfo then
-    C_Item.GetItemInfo = GetItemInfo
-  end
+  if not addon.isCata then return end
+  -- No compats right now :) 
 end
 
 -- OnEnable is called when the addon is enabled.
 function addon:OnEnable()
-  -- Hackfix for WotLK
+  -- Hackfix for Cata
   applyCompat()
   itemFrame:Enable()
   sectionFrame:Enable()
   masque:Enable()
-  context:Enable()
+  simpleItemLevel:Enable()
+  contextMenu:Enable()
   items:Enable()
   config:Enable()
   categories:Enable()
@@ -196,6 +215,9 @@ function addon:OnEnable()
   addon.Bags.Backpack = BagFrame:Create(const.BAG_KIND.BACKPACK)
   addon.Bags.Bank = BagFrame:Create(const.BAG_KIND.BANK)
 
+  table.insert(UISpecialFrames, addon.Bags.Backpack:GetName())
+  table.insert(UISpecialFrames, addon.Bags.Bank:GetName())
+
   consoleport:Enable()
 
   self:SecureHook('ToggleAllBags')
@@ -207,16 +229,26 @@ function addon:OnEnable()
 
   events:RegisterMessage('items/RefreshBackpack/Done', function(_, args)
     debug:Log("init/OnInitialize/items", "Drawing bag")
-    addon.Bags.Backpack:Draw(args[1])
+    addon.Bags.Backpack:Draw(args[1], args[2])
+    events:SendMessage('bags/Draw/Backpack/Done')
+    if not addon.Bags.Backpack.loaded then
+      addon.Bags.Backpack.loaded = true
+      events:SendMessage('bags/Draw/Backpack/Loaded')
+    end
    end)
 
   events:RegisterMessage('items/RefreshBank/Done', function(_, args)
-   debug:Log("init/OnInitialize/items", "Drawing bank")
+    debug:Log("init/OnInitialize/items", "Drawing bank")
      -- Show the bank frame if it's not already shown.
     if not addon.Bags.Bank:IsShown() and addon.atBank then
       addon.Bags.Bank:Show()
     end
-   addon.Bags.Bank:Draw(args[1])
+    addon.Bags.Bank:Draw(args[1], args[2])
+    events:SendMessage('bags/Draw/Bank/Done')
+    if not addon.Bags.Bank.loaded then
+      addon.Bags.Bank.loaded = true
+      events:SendMessage('bags/Draw/Bank/Loaded')
+    end
   end)
 
   events:RegisterEvent('PLAYER_REGEN_ENABLED', function()

@@ -68,6 +68,10 @@ function sectionProto:RemoveCell(id)
   self.content:RemoveCell(id)
 end
 
+function sectionProto:RekeyCell(oldID, newID)
+  self.content:RekeyCell(oldID, newID)
+end
+
 function sectionProto:GetMaxCellWidth()
   return self.content.maxCellWidth
 end
@@ -101,6 +105,7 @@ end
 
 function sectionProto:Wipe()
   self.content:Wipe()
+  self.frame:Hide()
   self.view = const.BAG_VIEW.SECTION_GRID
   self.frame:ClearAllPoints()
   self.frame:SetParent(nil)
@@ -205,6 +210,7 @@ end
 ---@param f Section
 function sectionFrame:_DoReset(f)
   f:EnableHeader()
+  f:GetContent():SortHorizontal()
   f:Wipe()
 end
 

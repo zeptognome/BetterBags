@@ -9,19 +9,18 @@ local L = addon:GetModule('Localization')
 ---@class Constants: AceModule
 local const = addon:NewModule('Constants')
 
-local WOW_PROJECT_WRATH_CLASSIC = 11
-
 -- Constants for detecting WoW version.
 addon.isRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 addon.isClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 addon.isBCC = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
-addon.isWrath = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
+addon.isCata = WOW_PROJECT_ID == WOW_PROJECT_CATACLYSM_CLASSIC
 
 ---@enum BagKind
 const.BAG_KIND = {
   UNDEFINED = -1,
   BACKPACK = 0,
   BANK = 1,
+  REAGENT_BANK = 2,
 }
 
 -- BANK_BAGS contains all the bags that are part of the bank, including
@@ -291,6 +290,31 @@ const.TRADESKILL_MAP = {
 	[19] = GetItemSubClassInfo(Enum.ItemClass.Tradegoods, 19), -- "Finishing Reagents"
 }
 
+---@class EquipmentSlotsMap
+---@type number[]
+const.EQUIPMENT_SLOTS = {
+  INVSLOT_AMMO,
+  INVSLOT_BACK,
+  INVSLOT_BODY,
+  INVSLOT_CHEST,
+  INVSLOT_FEET,
+  INVSLOT_FINGER1,
+  INVSLOT_FINGER2,
+  INVSLOT_HAND,
+  INVSLOT_HEAD,
+  INVSLOT_LEGS,
+  INVSLOT_MAINHAND,
+  INVSLOT_NECK,
+  INVSLOT_OFFHAND,
+  INVSLOT_RANGED,
+  INVSLOT_SHOULDER,
+  INVSLOT_TABARD,
+  INVSLOT_TRINKET1,
+  INVSLOT_TRINKET2,
+  INVSLOT_WAIST,
+  INVSLOT_WRIST,
+}
+
 ---@class CustomCategoryFilter
 ---@field name string
 ---@field enabled table<BagKind, boolean>
@@ -306,18 +330,30 @@ const.DATABASE_DEFAULTS = {
     debug = false,
     inBagSearch = false,
     showKeybindWarning = true,
+    newItems = {
+      [const.BAG_KIND.BACKPACK] = {
+        markRecentItems = false,
+        showNewItemFlash = false,
+      },
+      [const.BAG_KIND.BANK] = {
+        markRecentItems = false,
+        showNewItemFlash = false,
+      },
+    },
     stacking = {
       [const.BAG_KIND.BACKPACK]  = {
         mergeStacks = true,
         mergeUnstackable = true,
         unmergeAtShop = true,
         dontMergePartial = false,
+        dontMergeTransmog = false,
       },
       [const.BAG_KIND.BANK]  = {
         mergeStacks = true,
         mergeUnstackable = true,
         unmergeAtShop = true,
         dontMergePartial = false,
+        dontMergeTransmog = false,
       }
     },
     itemLevel = {
@@ -336,7 +372,7 @@ const.DATABASE_DEFAULTS = {
     },
     compaction = {
       [const.BAG_KIND.BACKPACK] = const.GRID_COMPACT_STYLE.SIMPLE,
-      [const.BAG_KIND.BANK] = const.GRID_COMPACT_STYLE.NONE,
+      [const.BAG_KIND.BANK] = const.GRID_COMPACT_STYLE.SIMPLE,
     },
     sectionSort = {
       [const.BAG_KIND.BACKPACK] = {
@@ -377,8 +413,8 @@ const.DATABASE_DEFAULTS = {
           opacity = 89,
         },
         [const.BAG_KIND.BANK] = {
-          columnCount = 15,
-          itemsPerRow = 5,
+          columnCount = 1,
+          itemsPerRow = 15,
           scale = 100,
           width = 700,
           height = 500,
@@ -395,8 +431,8 @@ const.DATABASE_DEFAULTS = {
           opacity = 89,
         },
         [const.BAG_KIND.BANK] = {
-          columnCount = 5,
-          itemsPerRow = 5,
+          columnCount = 1,
+          itemsPerRow = 15,
           scale = 100,
           width = 700,
           height = 500,
@@ -431,8 +467,8 @@ const.DATABASE_DEFAULTS = {
           opacity = 89,
         },
         [const.BAG_KIND.BANK] = {
-          columnCount = 5,
-          itemsPerRow = 5,
+          columnCount = 1,
+          itemsPerRow = 15,
           scale = 100,
           width = 700,
           height = 500,
